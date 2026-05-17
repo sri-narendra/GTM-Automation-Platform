@@ -1,0 +1,21 @@
+name: Keep Render Backend Alive
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    name: Ping Backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Health check
+        run: |
+          curl -s -o /dev/null -w "%{http_code}" https://gtm-automation-api.onrender.com/api/health || echo "Backend may be spinning up"
+
+      - name: Trigger enrichment cleanup
+        run: |
+          curl -s -o /dev/null -w "%{http_code}" https://gtm-automation-api.onrender.com/api/jobs/cleanup \
+            -X DELETE \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" || true
